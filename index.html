@@ -649,6 +649,11 @@ function renderStep2(){
   setStep(2);
   const players=getPlayerList(entryData.type);
   document.getElementById('entryContent').innerHTML=`
+    <div style="margin-bottom:10px;">
+      <input type="text" id="playerSearchEntry" placeholder="🔍 Type to filter names..."
+        style="width:100%;padding:9px 12px;border:1.5px solid #D7BDE2;border-radius:10px;font-size:14px;outline:none;"
+        oninput="filterEntryDropdowns()">
+    </div>
     <div class="team-card">
       <div class="team-label"><span>1</span>Team 1</div>
       <div class="field"><label>Player 1</label><select id="t1p1" onchange="filterDrops()"><option value="">Select...</option></select></div>
@@ -662,7 +667,7 @@ function renderStep2(){
     <div id="err2" class="error-msg">Please select all four players.</div>
     <div class="nav-row">
       <button class="btn btn-secondary" onclick="renderStep1()">&larr; Back</button>
-      <button class="btn btn-primary" onclick="step2Next()">Next: Scores &rarr;</button>
+      <button class="btn btn-primary" onclick="step2Next()">Next: Enter Player Names &rarr;</button>
     </div>`;
   ['t1p1','t1p2','t2p1','t2p2'].forEach(id=>populateSel(document.getElementById(id),players,[],'')); 
 }

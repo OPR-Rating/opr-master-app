@@ -876,8 +876,7 @@ async function toggleProfileMatch(idx){
       const subUrl=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=1534372635`;
       const sr=await fetch(subUrl);
       const st=await sr.text();
-      const subRows=st.trim().split('
-').slice(1).map(r=>parseCSV(r));
+      const subRows=st.trim().split('\n').slice(1).map(r=>parseCSV(r));
       const match=subRows.find(r=>r[1]===date&&r[3]===t1p1&&r[4]===t1p2)||
                   subRows.find(r=>r[1]===date&&(r[3]===t1p1||r[7]===t1p1));
       if(match){

@@ -509,7 +509,7 @@ async function loadProfile(name, gender) {
               <div class="date">${date} · ${type} ▼</div>
             </div>
           </div>
-          <div id="pmatchdetail_${midx}" style="display:none;background:#F5EEF8;padding:8px 12px;border-radius:8px;margin:-4px 0 4px;font-size:12px;text-align:center;color:#6C3483;"></div>`;
+          <div id="pmatchdetail_${midx}" style="display:none;background:#F5EEF8;padding:8px 12px;border-radius:8px;margin:-4px 0 4px;font-size:12px;text-align:center;"></div>`;
         });
       } else {
         matchHTML='<div class="empty-state" style="padding:20px 0;"><p>No matches yet</p></div>';
@@ -638,7 +638,14 @@ async function toggleRecent(idx){
           if(s1!==''&&s2!=='') scores.push(`${s1}/${s2}`);
         }
         if(scores.length>0){
-          setScoresHTML=scores.map(sc=>`<span style="background:#6C3483;color:white;border-radius:4px;padding:3px 10px;margin:0 3px;font-size:13px;font-weight:700;">${sc}</span>`).join('');
+          setScoresHTML=scores.map((sc,si)=>{
+            const s1=parseInt(match[11+si*2])||0;
+            const s2=parseInt(match[12+si*2])||0;
+            const playerOnT1=row[3]===name||row[4]===name;
+            const playerWonSet=playerOnT1?(s1>s2):(s2>s1);
+            const bg=playerWonSet?'#1e8449':'#c0392b';
+            return `<span style="background:${bg};color:white;border-radius:4px;padding:3px 10px;margin:0 3px;font-size:13px;font-weight:700;">${sc}</span>`;
+          }).join('');
         }
       }
     }catch(e){}
@@ -913,7 +920,15 @@ async function toggleProfileMatch(idx){
           if(s1!==undefined&&s1!==''&&s2!==undefined&&s2!=='') scores.push(s1+'/'+s2);
         }
         if(scores.length>0){
-          scoresHTML=scores.map(sc=>'<span style="background:#6C3483;color:white;border-radius:4px;padding:3px 10px;margin:0 3px;font-size:13px;font-weight:700;">'+sc+'</span>').join('');
+          scoresHTML=scores.map((sc,si)=>{
+            const s1=parseInt(match[11+si*2])||0;
+            const s2=parseInt(match[12+si*2])||0;
+            // Determine if this player's team won this set
+            const playerOnT1=row[3]===name||row[4]===name;
+            const playerWonSet=playerOnT1?(s1>s2):(s2>s1);
+            const bg=playerWonSet?'#1e8449':'#c0392b';
+            return '<span style="background:'+bg+';color:white;border-radius:4px;padding:3px 10px;margin:0 3px;font-size:13px;font-weight:700;">'+sc+'</span>';
+          }).join('');
         }
       }
     }catch(e){}
@@ -948,8 +963,8 @@ function openPlayerModal(fieldId, label) {
 function filterModalPlayers() {
   const q = document.getElementById('playerModalSearch').value.toLowerCase();
   const filtered = q ? _currentModalPlayers.filter(p => {
-    const parts = p.toLowerCase().split(' ');
-    return parts.some(part => part.startsWith(q));
+    const firstName = p.toLowerCase().split(' ')[0];
+    return firstName.startsWith(q);
   }) : _currentModalPlayers;
   renderModalList(filtered);
 }

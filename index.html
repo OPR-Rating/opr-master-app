@@ -444,6 +444,7 @@ function filterPlayers() {
 
 async function loadProfile(name, gender) {
   document.getElementById('profileTitle').textContent = name.split(' ')[0];
+  window._profileName = name;
   document.getElementById('profileContent').innerHTML = '<div class="loading"><span class="loading-spinner">⏳</span>Loading...</div>';
   showScreen('profileScreen');
   try {
@@ -919,20 +920,21 @@ async function toggleProfileMatch(idx){
                   subRows.find(r=>r[1]===date&&(r[3]===t1p1||r[7]===t1p1));
       if(match){
         const scores=[];
+        const profileName=window._profileName||'';
+        const playerOnT1=(match[3]===profileName||match[4]===profileName);
         for(let s=0;s<3;s++){
-          const s1=match[11+s*2],s2=match[12+s*2];
-          if(s1!==undefined&&s1!==''&&s2!==undefined&&s2!=='') scores.push(s1+'/'+s2);
+          const t1s=parseInt(match[11+s*2])||0;
+          const t2s=parseInt(match[12+s*2])||0;
+          if(match[11+s*2]!==undefined&&match[11+s*2]!==''){
+            const myScore=playerOnT1?t1s:t2s;
+            const oppScore=playerOnT1?t2s:t1s;
+            const won=myScore>oppScore;
+            const bg=won?'#1e8449':'#c0392b';
+            scores.push('<span style="background:'+bg+';color:white;border-radius:4px;padding:3px 10px;margin:0 3px;font-size:13px;font-weight:700;">'+myScore+'/'+oppScore+'</span>');
+          }
         }
         if(scores.length>0){
-          scoresHTML=scores.map((sc,si)=>{
-            const s1=parseInt(match[11+si*2])||0;
-            const s2=parseInt(match[12+si*2])||0;
-            // Determine if this player's team won this set
-            const playerOnT1=row[3]===name||row[4]===name;
-            const playerWonSet=playerOnT1?(s1>s2):(s2>s1);
-            const bg=playerWonSet?'#1e8449':'#c0392b';
-            return '<span style="background:'+bg+';color:white;border-radius:4px;padding:3px 10px;margin:0 3px;font-size:13px;font-weight:700;">'+sc+'</span>';
-          }).join('');
+          scoresHTML=scores.join('');
         }
       }
     }catch(e){}

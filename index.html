@@ -727,8 +727,11 @@ function filterDrops(){
 
 function step2Next(){
   const ids=['t1p1','t1p2','t2p1','t2p2'];
-  const vals=ids.map(id=>document.getElementById(id).value);
-  if(vals.some(v=>!v)){document.getElementById('err2').style.display='block';return;}
+  const vals=ids.map(id=>{
+    const el=document.getElementById(id+'_val');
+    return el?el.value.trim():'';
+  });
+  if(vals.some(v=>!v)){document.getElementById('err2').textContent='Please select all four players.';document.getElementById('err2').style.display='block';return;}
   if(new Set(vals).size<4){document.getElementById('err2').textContent='All four must be different.';document.getElementById('err2').style.display='block';return;}
   entryData.t1p1=vals[0];entryData.t1p2=vals[1];entryData.t2p1=vals[2];entryData.t2p2=vals[3];
   renderStep3();
@@ -944,7 +947,10 @@ function openPlayerModal(fieldId, label) {
 
 function filterModalPlayers() {
   const q = document.getElementById('playerModalSearch').value.toLowerCase();
-  const filtered = q ? _currentModalPlayers.filter(p => p.toLowerCase().includes(q)) : _currentModalPlayers;
+  const filtered = q ? _currentModalPlayers.filter(p => {
+    const parts = p.toLowerCase().split(' ');
+    return parts.some(part => part.startsWith(q));
+  }) : _currentModalPlayers;
   renderModalList(filtered);
 }
 

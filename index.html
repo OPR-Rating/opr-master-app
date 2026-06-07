@@ -115,10 +115,10 @@
   /* Recent matches */
   .recent-title { font-size: 12px; font-weight: 600; color: #6C3483; text-transform: uppercase; letter-spacing: 0.5px; margin: 14px 0 8px; }
   .recent-item { background: #F5EEF8; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; font-size: 12px; }
-  .recent-item .match-header { display: flex; justify-content: space-between; margin-bottom: 3px; }
+  .recent-item .match-header { display: flex; justify-content: center; gap: 12px; margin-bottom: 3px; }
   .recent-item .match-date { color: #888; font-size: 11px; }
   .recent-item .match-type { color: #6C3483; font-weight: 600; font-size: 11px; }
-  .recent-item .match-teams { color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .recent-item .match-teams { color: #333; text-align: center; }
 
   /* About */
   .about-section { margin-bottom: 20px; }
@@ -367,12 +367,12 @@ async function loadLadder(type, title) {
   document.getElementById('ladderTitle').textContent = title;
   try {
     const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GIDS[type]}`;
-    const r = await fetch(url);
-    const text = await r.text();
+    const resp = await fetch(url);
+    const text = await resp.text();
     const rows = text.trim().split('\n');
     if(rows.length<2){document.getElementById('ladderContent').innerHTML='<div class="empty-state"><div class="icon">🎾</div><p>No data yet</p></div>';return;}
     const headers = parseCSV(rows[0]);
-    const data = rows.slice(1).map(r=>parseCSV(r)).filter(r=>r[0]!=='');
+    const data = rows.slice(1).map(row=>parseCSV(row)).filter(row=>row[0]!=='');
     let html = '<table class="ladder-table"><thead><tr>';
     headers.forEach(h=>{html+=`<th>${h}</th>`;});
     html+='</tr></thead><tbody>';
@@ -450,6 +450,7 @@ async function loadProfile(name, gender) {
         return (n!==''&&n!=='0'&&isNaN(n)&&n.length>1)&&
           (r[3]===name||r[4]===name||r[7]===name||r[8]===name);
       }).reverse();
+      window._profileMatches = playerMatches;
 
       if(playerMatches.length>0){
         matchHTML = `<div class="section-header">Match History (${playerMatches.length})</div>`;
@@ -468,7 +469,8 @@ async function loadProfile(name, gender) {
           }
           const mysets=won?(t1p1===name||t1p2===name?t1sets:t2sets):(t1p1===name||t1p2===name?t1sets:t2sets);
           const oppsets=won?(t1p1===name||t1p2===name?t2sets:t1sets):(t1p1===name||t1p2===name?t2sets:t1sets);
-          matchHTML+=`<div class="match-row">
+          const midx=playerMatches.indexOf(row);
+          matchHTML+=`<div class="match-row" onclick="toggleProfileMatch(${midx})" style="cursor:pointer;" id="pmatch_${midx}">
             <span class="${won?'win-badge':'loss-badge'}">${won?'W':'L'}</span>
             <div class="match-info">
               <div class="partners">With ${partner||'-'}</div>
@@ -476,9 +478,10 @@ async function loadProfile(name, gender) {
             </div>
             <div class="match-meta">
               <div class="score">${mysets}-${oppsets}</div>
-              <div class="date">${date} · ${type}</div>
+              <div class="date">${date} · ${type} ▼</div>
             </div>
-          </div>`;
+          </div>
+          <div id="pmatchdetail_${midx}" style="display:none;background:#F5EEF8;padding:8px 12px;border-radius:8px;margin:-4px 0 4px;font-size:12px;text-align:center;color:#6C3483;"></div>`;
         });
       } else {
         matchHTML='<div class="empty-state" style="padding:20px 0;"><p>No matches yet</p></div>';
@@ -650,11 +653,6 @@ function renderStep2(){
   setStep(2);
   const players=getPlayerList(entryData.type);
   document.getElementById('entryContent').innerHTML=`
-    <div style="margin-bottom:10px;">
-      <input type="text" id="playerSearchEntry" placeholder="🔍 Type to filter names..."
-        style="width:100%;padding:9px 12px;border:1.5px solid #D7BDE2;border-radius:10px;font-size:14px;outline:none;"
-        oninput="filterEntryDropdowns()">
-    </div>
     <div class="team-card">
       <div class="team-label"><span>1</span>Team 1</div>
       <div class="field"><label>Player 1</label><select id="t1p1" onchange="filterDrops()"><option value="">Select...</option></select></div>
@@ -665,10 +663,11 @@ function renderStep2(){
       <div class="field"><label>Player 1</label><select id="t2p1" onchange="filterDrops()"><option value="">Select...</option></select></div>
       <div class="field"><label>Player 2</label><select id="t2p2" onchange="filterDrops()"><option value="">Select...</option></select></div>
     </div>
+    <div style="font-size:11px;color:#888;text-align:center;margin-top:4px;">💡 Tap a dropdown and type to search names</div>
     <div id="err2" class="error-msg">Please select all four players.</div>
     <div class="nav-row">
       <button class="btn btn-secondary" onclick="renderStep1()">&larr; Back</button>
-      <button class="btn btn-primary" onclick="step2Next()">Next: Enter Player Names &rarr;</button>
+      <button class="btn btn-primary" onclick="step2Next()">Next: Enter Scores &rarr;</button>
     </div>`;
   ['t1p1','t1p2','t2p1','t2p2'].forEach(id=>populateSel(document.getElementById(id),players,[],'')); 
 }
@@ -813,7 +812,7 @@ async function submitMatch(){
     const r=await fetch(url);
     const text=await r.text();
     const rows=text.trim().split('\n').slice(1).map(r=>parseCSV(r));
-    const playerRow=rows.find(r=>r[1]&&r[1].trim().toLowerCase()===submitter.toLowerCase());
+    const playerRow=rows.find(r=>r[0]&&r[0].trim().toLowerCase()===submitter.toLowerCase());
     if(!playerRow){err.textContent='Player not found. Contact administrator.';err.style.display='block';btn.textContent='\u2713 Submit Match';btn.disabled=false;return;}
     const storedPin=playerRow[6]?playerRow[6].trim():'';
     if(storedPin!==pin){err.textContent='Incorrect PIN. Please try again.';err.style.display='block';btn.textContent='\u2713 Submit Match';btn.disabled=false;return;}
@@ -844,6 +843,23 @@ async function doSubmit(btn){
     document.getElementById('err4').textContent='Submission failed. Please try again.';
     document.getElementById('err4').style.display='block';
     btn.textContent='\u2713 Submit Match';btn.disabled=false;
+  }
+}
+
+function toggleProfileMatch(idx){
+  const detail=document.getElementById('pmatchdetail_'+idx);
+  const row=window._profileMatches?window._profileMatches[idx]:null;
+  if(!row){return;}
+  if(detail.style.display==='none'){
+    const t1p1=row[3]||'',t1p2=row[4]||'';
+    const t2p1=row[7]||'',t2p2=row[8]||'';
+    const t1s=row[5]||0,t2s=row[9]||0;
+    const t1g=row[6]||0,t2g=row[10]||0;
+    detail.innerHTML=`${t1p1} & ${t1p2} vs ${t2p1} & ${t2p2}<br>
+      <strong>Sets: ${t1s}-${t2s}</strong> · Games: ${t1g}-${t2g}`;
+    detail.style.display='block';
+  } else {
+    detail.style.display='none';
   }
 }
 

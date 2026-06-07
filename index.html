@@ -298,6 +298,7 @@
 
 <script>
 const SHEET_ID = '1naHeo4lZFHrIar9Xi7m3BlDwuIZfqByrDMclxg2MR9E';
+const MASTER_PIN = '1963';
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzApVhLDkC0lvgIB-UIWdYYCYLS4Th2XCnrntZRed8ZPqHmjQ-MPuSHNUW9ltZ2glWJkw/exec';
 const GIDS = {
   players:'961698676', matches:'980623229',
@@ -750,6 +751,8 @@ function renderStep4(){
   setStep(4);
   const t1w=entryData.t1sets>entryData.t2sets;
   const scoreStr=Array.from({length:entryData.sets},(_,i)=>`${entryData['set'+(i+1)+'t1']}-${entryData['set'+(i+1)+'t2']}`).join('  ');
+  const players=[entryData.t1p1,entryData.t1p2,entryData.t2p1,entryData.t2p2];
+  const playerOptions=players.map(p=>`<option value="${p}">${p}</option>`).join('');
   document.getElementById('entryContent').innerHTML=`
     <div class="result-card ${t1w?'winner':'loser'}">
       <div>${t1w?'<div class="winner-label">Winner</div>':''}<div class="result-names">${entryData.t1p1}<br>${entryData.t1p2}</div></div>
@@ -760,6 +763,21 @@ function renderStep4(){
       <div>${!t1w?'<div class="winner-label">Winner</div>':''}<div class="result-names">${entryData.t2p1}<br>${entryData.t2p2}</div></div>
       <div style="text-align:right;"><div class="result-sets">${entryData.t2sets}</div><div class="result-games">${entryData.t2games} games</div></div>
     </div>
+    <div style="background:#F5EEF8;border:1.5px solid #D7BDE2;border-radius:12px;padding:14px;margin-top:12px;">
+      <div style="font-size:13px;font-weight:700;color:#6C3483;margin-bottom:10px;">🔐 Verify Submission</div>
+      <div class="field" style="margin-bottom:10px;">
+        <label>Who are you?</label>
+        <select id="submitterName" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;">
+          <option value="">Select your name...</option>
+          ${playerOptions}
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Your PIN</label>
+        <input type="password" id="submitterPin" maxlength="4" placeholder="4-digit PIN"
+          style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:18px;font-weight:700;letter-spacing:6px;text-align:center;">
+      </div>
+    </div>
     <div id="err4" class="error-msg"></div>
     <div class="nav-row" style="margin-top:12px;">
       <button class="btn btn-secondary" onclick="renderStep3()">&larr; Back</button>
@@ -768,8 +786,47 @@ function renderStep4(){
 }
 
 async function submitMatch(){
+  const submitter=document.getElementById('submitterName').value;
+  const pin=document.getElementById('submitterPin').value;
+  const err=document.getElementById('err4');
+
+  if(!submitter){err.textContent='Please select your name.';err.style.display='block';return;}
+  if(!pin||pin.length<4){err.textContent='Please enter your 4-digit PIN.';err.style.display='block';return;}
+
+  // Check PIN
+  err.style.display='none';
   const btn=document.getElementById('submitBtn');
-  btn.textContent='Submitting...';btn.disabled=true;
+  btn.textContent='Verifying...';btn.disabled=true;
+
+  // Master PIN check
+  if(pin===MASTER_PIN){
+    entryData.submittedBy='Admin';
+    doSubmit(btn);
+    return;
+  }
+
+  // Look up player PIN from Men/Ladies sheet
+  try{
+    const isMen=MEN.includes(submitter);
+    const gid=isMen?GIDS.mens:GIDS.ladies;
+    const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+    const r=await fetch(url);
+    const text=await r.text();
+    const rows=text.trim().split('\n').slice(1).map(r=>parseCSV(r));
+    const playerRow=rows.find(r=>r[1]&&r[1].trim().toLowerCase()===submitter.toLowerCase());
+    if(!playerRow){err.textContent='Player not found. Contact administrator.';err.style.display='block';btn.textContent='\u2713 Submit Match';btn.disabled=false;return;}
+    const storedPin=playerRow[6]?playerRow[6].trim():'';
+    if(storedPin!==pin){err.textContent='Incorrect PIN. Please try again.';err.style.display='block';btn.textContent='\u2713 Submit Match';btn.disabled=false;return;}
+    entryData.submittedBy=submitter;
+    doSubmit(btn);
+  }catch(e){
+    err.textContent='Could not verify PIN. Check your connection.';err.style.display='block';
+    btn.textContent='\u2713 Submit Match';btn.disabled=false;
+  }
+}
+
+async function doSubmit(btn){
+  btn.textContent='Submitting...';
   try{
     await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(entryData)});
     document.getElementById('entryContent').innerHTML=`
@@ -778,6 +835,7 @@ async function submitMatch(){
         <div style="font-size:18px;font-weight:700;color:#1e8449;margin-bottom:8px;">Match Submitted!</div>
         <div style="font-size:13px;color:#666;">${entryData.t1p1} & ${entryData.t1p2}<br>vs<br>${entryData.t2p1} & ${entryData.t2p2}</div>
         <div style="font-size:12px;color:#888;margin-top:6px;">${entryData.t1sets}-${entryData.t2sets} sets</div>
+        <div style="font-size:11px;color:#aaa;margin-top:4px;">Submitted by ${entryData.submittedBy}</div>
       </div>
       <button class="btn btn-primary" style="margin-top:20px;" onclick="renderStep1()">Enter Another Match</button>
       <button class="btn btn-secondary" style="margin-top:8px;" onclick="goHome()">Back to Home</button>`;

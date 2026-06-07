@@ -639,15 +639,15 @@ async function toggleRecent(idx){
         }
         if(scores.length>0){
           setScoresHTML=scores.map((sc,si)=>{
-            const s1=parseInt(match[11+si*2])||0;
-            const s2=parseInt(match[12+si*2])||0;
-            const playerOnT1=row[3]===name||row[4]===name;
-            // playerScore = the score belonging to this player's team
-            const playerScore=playerOnT1?s1:s2;
-            const oppScore=playerOnT1?s2:s1;
+            // match cols: 3=T1P1, 4=T1P2, 7=T2P1, 8=T2P2
+            // set scores: 11=Set1T1, 12=Set1T2, 13=Set2T1, 14=Set2T2 etc
+            const t1score=parseInt(match[11+si*2])||0;
+            const t2score=parseInt(match[12+si*2])||0;
+            const playerOnT1=(match[3]===name||match[4]===name);
+            const playerScore=playerOnT1?t1score:t2score;
+            const oppScore=playerOnT1?t2score:t1score;
             const playerWonSet=playerScore>oppScore;
             const bg=playerWonSet?'#1e8449':'#c0392b';
-            // Show from player's perspective: their score / opponent score
             return `<span style="background:${bg};color:white;border-radius:4px;padding:3px 10px;margin:0 3px;font-size:13px;font-weight:700;">${playerScore}/${oppScore}</span>`;
           }).join('');
         }

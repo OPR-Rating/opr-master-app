@@ -143,6 +143,19 @@
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .empty-state { text-align: center; padding: 40px 20px; color: #888; }
   .empty-state .icon { font-size: 44px; margin-bottom: 10px; }
+  .player-modal { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: white; border-radius: 20px 20px 0 0; box-shadow: 0 -4px 20px rgba(0,0,0,0.2); z-index: 1000; max-height: 70vh; display: flex; flex-direction: column; }
+  .player-modal-header { padding: 16px 16px 8px; border-bottom: 1px solid #eee; }
+  .player-modal-title { font-size: 14px; font-weight: 700; color: #6C3483; margin-bottom: 8px; }
+  .player-modal-search { width: 100%; padding: 10px 12px; border: 1.5px solid #D7BDE2; border-radius: 10px; font-size: 16px; outline: none; }
+  .player-modal-search:focus { border-color: #6C3483; }
+  .player-modal-list { overflow-y: auto; flex: 1; }
+  .player-modal-item { padding: 12px 16px; border-bottom: 1px solid #f5f5f5; font-size: 15px; cursor: pointer; }
+  .player-modal-item:active { background: #F5EEF8; }
+  .player-modal-cancel { padding: 14px; text-align: center; font-size: 15px; color: #888; cursor: pointer; border-top: 1px solid #eee; }
+  .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 999; }
+  .player-display { width: 100%; padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 10px; font-size: 14px; background: white; cursor: pointer; text-align: left; color: #222; display: flex; justify-content: space-between; align-items: center; }
+  .player-display.selected { border-color: #6C3483; background: #F5EEF8; color: #6C3483; font-weight: 600; }
+  .player-display .arrow { color: #888; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -294,6 +307,16 @@
     <div class="screen-content" id="entryContent"></div>
   </div>
 
+  <!-- PLAYER SEARCH MODAL -->
+  <div class="modal-overlay" id="playerModalOverlay" style="display:none;" onclick="closePlayerModal()"></div>
+  <div class="player-modal" id="playerModal" style="display:none;">
+    <div class="player-modal-header">
+      <div class="player-modal-title" id="playerModalTitle">Select Player</div>
+      <input type="text" class="player-modal-search" id="playerModalSearch" placeholder="Type to search..." oninput="filterModalPlayers()" autocomplete="off">
+    </div>
+    <div class="player-modal-list" id="playerModalList"></div>
+    <div class="player-modal-cancel" onclick="closePlayerModal()">Cancel</div>
+  </div>
 </div>
 
 <script>
@@ -679,15 +702,7 @@ function renderStep2(){
 }
 
 function filterDrops(){
-  const players=getPlayerList(entryData.type);
-  const ids=['t1p1','t1p2','t2p1','t2p2'];
-  const sel=ids.map(id=>document.getElementById(id)?document.getElementById(id).value:'');
-  ids.forEach((id,i)=>{
-    const el=document.getElementById(id);
-    if(!el)return;
-    const ex=sel.filter((v,j)=>j!==i&&v!=='');
-    populateSel(el,players,ex,sel[i]);
-  });
+  // Modal handles exclusions dynamically - nothing needed here
 }
 
 function step2Next(){
@@ -883,6 +898,59 @@ async function toggleProfileMatch(idx){
   } else {
     detail.style.display='none';
   }
+}
+
+let _currentModalTarget = null;
+let _currentModalPlayers = [];
+
+function openPlayerModal(fieldId, label) {
+  _currentModalTarget = fieldId;
+  const players = getPlayerList(entryData.type);
+  const ids = ['t1p1','t1p2','t2p1','t2p2'];
+  const sel = ids.map(id => {
+    const el = document.getElementById(id+'_val');
+    return el ? el.value : '';
+  });
+  const idx = ids.indexOf(fieldId);
+  const exclude = sel.filter((v,j) => j !== idx && v !== '');
+  _currentModalPlayers = players.filter(p => !exclude.includes(p));
+  document.getElementById('playerModalTitle').textContent = label;
+  document.getElementById('playerModalSearch').value = '';
+  renderModalList(_currentModalPlayers);
+  document.getElementById('playerModalOverlay').style.display = 'block';
+  document.getElementById('playerModal').style.display = 'flex';
+  document.getElementById('playerModalSearch').focus();
+}
+
+function filterModalPlayers() {
+  const q = document.getElementById('playerModalSearch').value.toLowerCase();
+  const filtered = q ? _currentModalPlayers.filter(p => p.toLowerCase().includes(q)) : _currentModalPlayers;
+  renderModalList(filtered);
+}
+
+function renderModalList(players) {
+  document.getElementById('playerModalList').innerHTML = players.map(p =>
+    '<div class="player-modal-item" onclick="selectModalPlayer(\'' + p.replace(/'/g, "\\'") + '\')">' + p + '</div>'
+  ).join('');
+}
+
+function selectModalPlayer(name) {
+  if (!_currentModalTarget) return;
+  const valEl = document.getElementById(_currentModalTarget + '_val');
+  const btnEl = document.getElementById(_currentModalTarget + '_btn');
+  if (valEl) valEl.value = name;
+  if (btnEl) {
+    btnEl.textContent = name;
+    btnEl.classList.add('selected');
+  }
+  closePlayerModal();
+  filterDrops();
+}
+
+function closePlayerModal() {
+  document.getElementById('playerModalOverlay').style.display = 'none';
+  document.getElementById('playerModal').style.display = 'none';
+  _currentModalTarget = null;
 }
 
 window.onload=async function(){await loadPlayers();};

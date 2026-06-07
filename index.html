@@ -679,26 +679,46 @@ function populateSel(sel,players,exclude,selected){
 
 function renderStep2(){
   setStep(2);
-  const players=getPlayerList(entryData.type);
   document.getElementById('entryContent').innerHTML=`
     <div class="team-card">
       <div class="team-label"><span>1</span>Team 1</div>
-      <div class="field"><label>Player 1</label><span id="t1p1wrap"></span></div>
-      <div class="field"><label>Player 2</label><span id="t1p2wrap"></span></div>
+      <div class="field">
+        <label>Player 1</label>
+        <input type="hidden" id="t1p1_val">
+        <button class="player-display" id="t1p1_btn" onclick="openPlayerModal('t1p1','Team 1 - Player 1')">
+          <span id="t1p1_lbl">Tap to select...</span><span class="arrow">&#9660;</span>
+        </button>
+      </div>
+      <div class="field">
+        <label>Player 2</label>
+        <input type="hidden" id="t1p2_val">
+        <button class="player-display" id="t1p2_btn" onclick="openPlayerModal('t1p2','Team 1 - Player 2')">
+          <span id="t1p2_lbl">Tap to select...</span><span class="arrow">&#9660;</span>
+        </button>
+      </div>
     </div>
     <div class="team-card">
       <div class="team-label"><span>2</span>Team 2</div>
-      <div class="field"><label>Player 1</label><span id="t2p1wrap"></span></div>
-      <div class="field"><label>Player 2</label><span id="t2p2wrap"></span></div>
+      <div class="field">
+        <label>Player 1</label>
+        <input type="hidden" id="t2p1_val">
+        <button class="player-display" id="t2p1_btn" onclick="openPlayerModal('t2p1','Team 2 - Player 1')">
+          <span id="t2p1_lbl">Tap to select...</span><span class="arrow">&#9660;</span>
+        </button>
+      </div>
+      <div class="field">
+        <label>Player 2</label>
+        <input type="hidden" id="t2p2_val">
+        <button class="player-display" id="t2p2_btn" onclick="openPlayerModal('t2p2','Team 2 - Player 2')">
+          <span id="t2p2_lbl">Tap to select...</span><span class="arrow">&#9660;</span>
+        </button>
+      </div>
     </div>
     <div id="err2" class="error-msg">Please select all four players.</div>
     <div class="nav-row">
       <button class="btn btn-secondary" onclick="renderStep1()">&larr; Back</button>
       <button class="btn btn-primary" onclick="step2Next()">Next: Enter Scores &rarr;</button>
     </div>`;
-  ['t1p1','t1p2','t2p1','t2p2'].forEach(id=>{
-    document.getElementById(id+'wrap').innerHTML=makeSearchInput(id,players,[],"");
-  }); 
 }
 
 function filterDrops(){
@@ -937,14 +957,12 @@ function renderModalList(players) {
 function selectModalPlayer(name) {
   if (!_currentModalTarget) return;
   const valEl = document.getElementById(_currentModalTarget + '_val');
+  const lblEl = document.getElementById(_currentModalTarget + '_lbl');
   const btnEl = document.getElementById(_currentModalTarget + '_btn');
   if (valEl) valEl.value = name;
-  if (btnEl) {
-    btnEl.textContent = name;
-    btnEl.classList.add('selected');
-  }
+  if (lblEl) lblEl.textContent = name;
+  if (btnEl) btnEl.classList.add('selected');
   closePlayerModal();
-  filterDrops();
 }
 
 function closePlayerModal() {

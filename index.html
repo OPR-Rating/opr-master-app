@@ -681,7 +681,7 @@ function renderStep2(){
       <button class="btn btn-primary" onclick="step2Next()">Next: Enter Scores &rarr;</button>
     </div>`;
   ['t1p1','t1p2','t2p1','t2p2'].forEach(id=>{
-    document.getElementById(id+'wrap').innerHTML=makeSearchInput(id,players,[],\'\');
+    document.getElementById(id+'wrap').innerHTML=makeSearchInput(id,players,[],"");
   }); 
 }
 

@@ -642,13 +642,6 @@ function step1Next(){
   renderStep2();
 }
 
-function makeSearchInput(id, players, exclude, selected) {
-  const listId = id + '_list';
-  const filtered = players.filter(p => !exclude.includes(p));
-  const opts = filtered.map(p => '<option value="'+p+'">').join('');
-  return '<input type="text" id="'+id+'" value="'+(selected||'')+'" placeholder="Type name..." autocomplete="off" list="'+listId+'" oninput="filterDrops()" style="width:100%;padding:10px 12px;border:1.5px solid #ddd;border-radius:10px;font-size:14px;outline:none;"><datalist id="'+listId+'">'+opts+'</datalist>';
-}
-
 function populateSel(sel,players,exclude,selected){
   sel.innerHTML='<option value="">Select...</option>';
   players.forEach(p=>{
@@ -686,19 +679,15 @@ function renderStep2(){
 }
 
 function filterDrops(){
-  const q=document.getElementById('playerSearchEntry')?document.getElementById('playerSearchEntry').value.toLowerCase():'';
-  let players=getPlayerList(entryData.type);
-  if(q) players=players.filter(p=>p.toLowerCase().includes(q));
+  const players=getPlayerList(entryData.type);
   const ids=['t1p1','t1p2','t2p1','t2p2'];
-  const sel=ids.map(id=>document.getElementById(id).value);
+  const sel=ids.map(id=>document.getElementById(id)?document.getElementById(id).value:'');
   ids.forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(!el)return;
     const ex=sel.filter((v,j)=>j!==i&&v!=='');
-    populateSel(document.getElementById(id),players,ex,sel[i]);
+    populateSel(el,players,ex,sel[i]);
   });
-}
-
-function filterEntryDropdowns(){
-  filterDrops();
 }
 
 function step2Next(){

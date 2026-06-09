@@ -452,7 +452,7 @@ function renderPlayerList(players) {
 function filterPlayers() {
   const q=document.getElementById('playerSearch').value.toLowerCase();
   const all=[...MEN.map(n=>({name:n,gender:'M'})),...LADIES.map(n=>({name:n,gender:'F'}))].sort((a,b)=>a.name.localeCompare(b.name));
-  renderPlayerList(q?all.filter(p=>p.name.toLowerCase().includes(q)):all);
+  renderPlayerList(q?all.filter(p=>p.name.toLowerCase().split(' ').some(part=>part.startsWith(q))):all);
 }
 
 async function loadProfile(name, gender) {

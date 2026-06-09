@@ -37,6 +37,13 @@
   .menu-btn:active { background: #F5EEF8; transform: scale(0.97); }
   .menu-btn .icon { font-size: 20px; display: block; margin-bottom: 3px; }
   .menu-btn.full-width { grid-column: span 2; }
+  .ladders-group-title { font-size: 11px; font-weight: 700; color: #6C3483; text-transform: uppercase; letter-spacing: 0.6px; margin: 14px 0 8px; }
+  .ladders-group-title:first-child { margin-top: 0; }
+  .ladders-group-title.soon { color: #bbb; }
+  .ladders-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ladders-grid.one-col { grid-template-columns: 1fr; }
+  .menu-btn.soon { background: #fafafa; border: 1.5px dashed #ccc; color: #bbb; cursor: default; }
+  .menu-btn.soon:active { transform: none; background: #fafafa; }
 
   /* Ladder */
   .ladder-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 480px; }
@@ -181,13 +188,7 @@
     <div class="screen-content home-content">
       <button class="btn-enter" onclick="showScreen('entryScreen')">✚ Enter Match Score</button>
       <div class="menu-grid">
-        <button class="menu-btn" onclick="loadLadder('mens','Mens Ladder')">Men's Ladder</button>
-        <button class="menu-btn" onclick="loadLadder('ladies','Ladies Ladder')">Ladies Ladder</button>
-        <button class="menu-btn" onclick="loadLadder('mensdoubles','Mens Doubles Rating')">Men's Doubles</button>
-        <button class="menu-btn" onclick="loadLadder('ladiesdoubles','Ladies Doubles Rating')">Ladies Doubles</button>
-        <button class="menu-btn" onclick="loadLadder('mixed','Mixed Doubles Rating')">Mixed Doubles</button>
-        <button class="menu-btn" onclick="loadLadder('allsorts','All Sorts Rating')">All Sorts</button>
-        <button class="menu-btn" onclick="loadLadder('universal','Universal Rating')">Universal</button>
+        <button class="menu-btn" onclick="showScreen('laddersScreen')">Ladders</button>
         <button class="menu-btn" onclick="showProfileSearch()">Member Profile</button>
         <button class="menu-btn" onclick="showScreen('tournamentScreen')">Tournaments</button>
         <button class="menu-btn" onclick="showScreen('aboutScreen')">About OPR</button>
@@ -197,10 +198,41 @@
     </div>
   </div>
 
+  <!-- LADDERS MENU -->
+  <div class="screen hidden" id="laddersScreen">
+    <div class="header">
+      <button class="back-btn" onclick="goHome()">&#8592;</button>
+      <h1>Ladders</h1>
+    </div>
+    <div class="screen-content">
+      <div class="ladders-group-title">Singles Ladders</div>
+      <div class="ladders-grid">
+        <button class="menu-btn" onclick="loadLadder('mens','Mens Ladder')">Men's Ladder</button>
+        <button class="menu-btn" onclick="loadLadder('ladies','Ladies Ladder')">Ladies Ladder</button>
+      </div>
+      <div class="ladders-group-title">Doubles Ladders</div>
+      <div class="ladders-grid">
+        <button class="menu-btn" onclick="loadLadder('mensdoubles','Mens Doubles Rating')">Men's Doubles</button>
+        <button class="menu-btn" onclick="loadLadder('ladiesdoubles','Ladies Doubles Rating')">Ladies Doubles</button>
+        <button class="menu-btn" onclick="loadLadder('mixed','Mixed Doubles Rating')">Mixed Doubles</button>
+        <button class="menu-btn" onclick="loadLadder('allsorts','All Sorts Rating')">All Sorts</button>
+      </div>
+      <div class="ladders-group-title">Universal</div>
+      <div class="ladders-grid one-col">
+        <button class="menu-btn" onclick="loadLadder('universal','Universal Rating')">Universal Ladder</button>
+      </div>
+      <div class="ladders-group-title soon">Coming soon</div>
+      <div class="ladders-grid">
+        <button class="menu-btn soon" disabled>Performance</button>
+        <button class="menu-btn soon" disabled>Star Performer</button>
+      </div>
+    </div>
+  </div>
+
   <!-- LADDER -->
   <div class="screen hidden" id="ladderScreen">
     <div class="header">
-      <button class="back-btn" onclick="goHome()">&#8592;</button>
+      <button class="back-btn" onclick="showScreen('laddersScreen')">&#8592;</button>
       <h1 id="ladderTitle">Ladder</h1>
     </div>
     <div class="screen-content" style="padding:0;overflow-x:auto;">
@@ -452,7 +484,7 @@ function renderPlayerList(players) {
 function filterPlayers() {
   const q=document.getElementById('playerSearch').value.toLowerCase();
   const all=[...MEN.map(n=>({name:n,gender:'M'})),...LADIES.map(n=>({name:n,gender:'F'}))].sort((a,b)=>a.name.localeCompare(b.name));
-  renderPlayerList(q?all.filter(p=>p.name.toLowerCase().split(' ').some(part=>part.startsWith(q))):all);
+  renderPlayerList(q?all.filter(p=>p.name.toLowerCase().split(' ')[0].startsWith(q)):all);
 }
 
 async function loadProfile(name, gender) {
